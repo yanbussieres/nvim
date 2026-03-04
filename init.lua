@@ -6,6 +6,12 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.have_nerd_font = true
 
+-- Disable unused providers
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.python3_host_prog = vim.env.HOME .. "/.venv/neovim/bin/python"
+
 -- ─────────────────────────────── Options ────────────────────────────────
 vim.o.number = true
 vim.o.relativenumber = true
@@ -30,6 +36,9 @@ vim.o.inccommand = "split"
 vim.o.cursorline = true
 vim.o.scrolloff = 10
 vim.o.confirm = true
+vim.o.tabstop = 2
+vim.o.shiftwidth = 2
+vim.o.expandtab = true
 
 -- ────────────────────────────── Filetypes ───────────────────────────────
 vim.filetype.add({ extension = { mdc = "markdown" } })
@@ -78,17 +87,15 @@ vim.pack.add({
 	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 	{ src = "https://github.com/nvim-tree/nvim-web-devicons" },
 	{ src = "https://github.com/nvim-telescope/telescope.nvim" },
+	{ src = "https://github.com/dmtrKovalenko/fff.nvim" },
 
 	-- LSP
-	{ src = "https://github.com/neovim/nvim-lspconfig" },
-	{ src = "https://github.com/mason-org/mason.nvim" },
-	{ src = "https://github.com/mason-org/mason-lspconfig.nvim" },
-	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
 	{ src = "https://github.com/j-hui/fidget.nvim" },
 
 	-- Completion
 	{ src = "https://github.com/saghen/blink.cmp", version = "v1.9.1" },
 	{ src = "https://github.com/L3MON4D3/LuaSnip", version = "v2.4.1" },
+	{ src = "https://github.com/rafamadriz/friendly-snippets" },
 	{ src = "https://github.com/zbirenbaum/copilot.lua" },
 	{ src = "https://github.com/giuxtaposition/blink-cmp-copilot" },
 
@@ -101,12 +108,6 @@ vim.pack.add({
 	-- File tree
 	{ src = "https://github.com/MunifTanjim/nui.nvim" },
 	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim" },
-
-	-- Lua dev completions
-	{ src = "https://github.com/folke/lazydev.nvim" },
-
-	-- Git UI
-	{ src = "https://github.com/kdheepak/lazygit.nvim" },
 
 	-- Tmux navigation
 	{ src = "https://github.com/christoomey/vim-tmux-navigator" },
@@ -188,7 +189,7 @@ require("which-key").setup({
 		{ "<leader>s", group = "[S]earch" },
 		{ "<leader>g", group = "[G]it" },
 		{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
-		{ "<leader>f", group = "[F]ile/Format" },
+		{ "<leader>f", group = "[F]ile/Format/Fix" },
 		{ "<leader>u", group = "[U]I Toggle" },
 	},
 })
@@ -218,10 +219,16 @@ vim.keymap.set("n", "<leader>sf", function()
 	builtin.find_files({ hidden = true, no_ignore = true, prompt_title = "Find Files" })
 end, { desc = "[S]earch [F]iles (hidden)" })
 
--- Lazydev
-require("lazydev").setup({
-	library = { { path = "${3rd}/luv/library", words = { "vim%.uv" } } },
-})
+-- fff.nvim
+require("fff").setup({})
+vim.keymap.set("n", "<leader><leader>", function()
+	local git_root = vim.fs.root(0, ".git")
+	if git_root then
+		require("fff").find_files_in_dir(git_root)
+	else
+		require("fff").find_files()
+	end
+end, { desc = "Find files (fff, git-root or cwd)" })
 
 -- Fidget
 require("fidget").setup({})
@@ -240,12 +247,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		local map = function(keys, func, desc, mode)
 			vim.keymap.set(mode or "n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
 		end
-		map("grn", vim.lsp.buf.rename, "[R]e[n]ame")
-		map("gra", vim.lsp.buf.code_action, "[G]oto Code [A]ction", { "n", "x" })
-		map("grr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
-		map("gri", require("telescope.builtin").lsp_implementations, "[G]oto [I]mplementation")
-		map("grd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
-		map("grD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
+		-- gr* keymaps are nvim 0.12 built-in defaults; extras below are not covered natively
 		map("gO", require("telescope.builtin").lsp_document_symbols, "Document Symbols")
 		map("gW", require("telescope.builtin").lsp_dynamic_workspace_symbols, "Workspace Symbols")
 		map("grt", require("telescope.builtin").lsp_type_definitions, "[G]oto [T]ype Definition")
@@ -296,38 +298,17 @@ vim.diagnostic.config({
 	virtual_text = { source = "if_many", spacing = 2 },
 })
 
-local capabilities = require("blink.cmp").get_lsp_capabilities()
-
-local servers = {
-	ts_ls = {},
-	lua_ls = {
-		settings = {
-			Lua = {
-				completion = { callSnippet = "Replace" },
-				diagnostics = { globals = { "vim" } },
-			},
-		},
-	},
-	elixirls = {
-		settings = { elixirLS = { dialyzerEnabled = true, fetchDeps = false } },
-	},
-}
-
-require("mason").setup({})
-require("mason-tool-installer").setup({
-	ensure_installed = vim.list_extend(vim.tbl_keys(servers), { "stylua", "prettierd", "prettier" }),
+-- Global: merge blink capabilities into every server
+vim.lsp.config("*", {
+	capabilities = require("blink.cmp").get_lsp_capabilities(),
 })
-require("mason-lspconfig").setup({
-	ensure_installed = {},
-	automatic_installation = false,
-	handlers = {
-		function(server_name)
-			local server = servers[server_name] or {}
-			server.capabilities = vim.tbl_deep_extend("force", {}, capabilities, server.capabilities or {})
-			require("lspconfig")[server_name].setup(server)
-		end,
-	},
-})
+
+-- LSP servers (all installed manually via brew/npm — no mason)
+-- ts_ls: npm install -g typescript typescript-language-server
+-- lua_ls: brew install lua-language-server
+-- eslint_ls: npm install -g vscode-langservers-extracted
+-- tailwindcss: npm install -g @tailwindcss/language-server
+vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss" })
 
 -- Conform (format on save)
 require("conform").setup({
@@ -350,24 +331,40 @@ require("conform").setup({
 		json = { "prettierd" },
 		yaml = { "prettierd" },
 		markdown = { "prettierd" },
-		elixir = { "mix" },
-		heex = { "mix" },
-		eex = { "mix" },
 	},
 })
 vim.keymap.set({ "n", "v" }, "<leader>f", function()
 	require("conform").format({ async = true, lsp_format = "never" })
 end, { desc = "[F]ormat buffer" })
+vim.keymap.set("n", "<leader>fe", "<cmd>EslintFixAll<CR>", { desc = "[F]ix [E]SLint" })
+
+-- LuaSnip
+require("luasnip").setup({
+	history = true,
+	delete_check_events = "TextChanged",
+})
+require("luasnip.loaders.from_vscode").lazy_load()
+-- Jump forward/backward through snippet nodes (<Tab>/<S-Tab> are owned by blink.cmp)
+vim.keymap.set({ "i", "s" }, "<C-l>", function()
+	if require("luasnip").jumpable(1) then
+		require("luasnip").jump(1)
+	end
+end, { desc = "LuaSnip jump forward" })
+vim.keymap.set({ "i", "s" }, "<C-h>", function()
+	if require("luasnip").jumpable(-1) then
+		require("luasnip").jump(-1)
+	end
+end, { desc = "LuaSnip jump backward" })
 
 -- Blink.cmp
 require("blink.cmp").setup({
 	keymap = { preset = "default" },
 	appearance = { nerd_font_variant = "mono" },
 	completion = { documentation = { auto_show = false, auto_show_delay_ms = 500 } },
+	snippets = { preset = "luasnip" },
 	sources = {
-		default = { "lsp", "path", "lazydev", "copilot" },
+		default = { "lsp", "path", "snippets", "copilot" },
 		providers = {
-			lazydev = { module = "lazydev.integrations.blink", score_offset = 100 },
 			copilot = { name = "copilot", module = "blink-cmp-copilot", score_offset = 25, async = true },
 		},
 	},
@@ -379,12 +376,10 @@ require("blink.cmp").setup({
 require("nvim-treesitter").install({
 	"bash",
 	"diff",
-	"elixir",
-	"heex",
-	"eex",
 	"html",
 	"javascript",
 	"jsdoc",
+	"json",
 	"tsx",
 	"typescript",
 	"lua",
@@ -415,8 +410,5 @@ require("neo-tree").setup({
 	},
 })
 vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", { desc = "NeoTree reveal", silent = false })
-
--- LazyGit
-vim.keymap.set("n", "<leader>gl", "<cmd>LazyGit<cr>", { desc = "[G]it [L]azyGit" })
 
 -- vim: ts=2 sts=2 sw=2 et
