@@ -6,6 +6,9 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.have_nerd_font = true
 
+-- Fix GBrowse on macOS (netrw#BrowseX signature changed)
+vim.g.netrw_browsex_viewer = "open"
+
 -- Disable unused providers
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_perl_provider = 0
@@ -71,7 +74,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- Update: :lua vim.pack.update()   Remove: :lua vim.pack.del({'name'})
 vim.pack.add({
 	-- Colorscheme
-	{ src = "https://github.com/scottmckendry/cyberdream.nvim" },
+	-- { src = "https://github.com/scottmckendry/cyberdream.nvim" },
 
 	-- Core editing
 	{ src = "https://github.com/NMAC427/guess-indent.nvim" },
@@ -79,6 +82,8 @@ vim.pack.add({
 
 	-- Git
 	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
+	{ src = "https://github.com/tpope/vim-fugitive" },
+	{ src = "https://github.com/tpope/vim-rhubarb" },
 
 	-- Keybinding hints
 	{ src = "https://github.com/folke/which-key.nvim" },
@@ -105,6 +110,9 @@ vim.pack.add({
 	-- Treesitter
 	{ src = "https://github.com/nvim-treesitter/nvim-treesitter" },
 
+	-- Markdown rendering
+	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
+
 	-- File tree
 	{ src = "https://github.com/MunifTanjim/nui.nvim" },
 	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim" },
@@ -116,7 +124,7 @@ vim.pack.add({
 -- ─────────────────────────── Plugin Setup ───────────────────────────────
 
 -- Colorscheme
-vim.cmd.colorscheme("cyberdream-light")
+-- vim.cmd.colorscheme("cyberdream-light")
 
 -- Guess indent
 require("guess-indent").setup({})
@@ -127,6 +135,15 @@ statusline.setup({ use_icons = vim.g.have_nerd_font })
 ---@diagnostic disable-next-line: duplicate-set-field
 statusline.section_location = function()
 	return "%2l:%-2v"
+end
+---@diagnostic disable-next-line: duplicate-set-field
+statusline.section_git = function()
+	local raw = vim.fn.FugitiveStatusline()
+	local branch = raw:match("%((.-)%)")
+	if not branch or branch == "" then return "" end
+	local d = vim.b.gitsigns_status_dict
+	local dirty = d and ((d.added or 0) + (d.changed or 0) + (d.removed or 0) > 0)
+	return " " .. branch .. (dirty and "  ●" or "")
 end
 
 -- Gitsigns
@@ -179,6 +196,10 @@ require("gitsigns").setup({
 		map("n", "<leader>uD", gs.preview_hunk_inline, { desc = "[U]I Toggle git show [D]eleted" })
 	end,
 })
+
+-- Fugitive
+vim.keymap.set("n", "<leader>gG", "<cmd>Git<CR>", { desc = "[G]it fugitive status" })
+vim.keymap.set({ "n", "v" }, "<leader>go", "<cmd>GBrowse<CR>", { desc = "[G]it [O]pen on GitHub" })
 
 -- Which-key
 require("which-key").setup({
@@ -397,6 +418,9 @@ vim.api.nvim_create_autocmd("FileType", {
 		pcall(vim.treesitter.start)
 	end,
 })
+
+-- Render-markdown
+require("render-markdown").setup({})
 
 -- Neo-tree
 require("neo-tree").setup({
