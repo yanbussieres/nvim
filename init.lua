@@ -140,7 +140,9 @@ end
 statusline.section_git = function()
 	local raw = vim.fn.FugitiveStatusline()
 	local branch = raw:match("%((.-)%)")
-	if not branch or branch == "" then return "" end
+	if not branch or branch == "" then
+		return ""
+	end
 	local d = vim.b.gitsigns_status_dict
 	local dirty = d and ((d.added or 0) + (d.changed or 0) + (d.removed or 0) > 0)
 	return " " .. branch .. (dirty and "  ●" or "")
@@ -329,7 +331,7 @@ vim.lsp.config("*", {
 -- lua_ls: brew install lua-language-server
 -- eslint_ls: npm install -g vscode-langservers-extracted
 -- tailwindcss: npm install -g @tailwindcss/language-server
-vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss" })
+vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo" })
 
 -- Conform (format on save)
 require("conform").setup({
@@ -343,15 +345,16 @@ require("conform").setup({
 	end,
 	formatters_by_ft = {
 		lua = { "stylua" },
-		javascript = { "prettierd" },
-		typescript = { "prettierd" },
-		javascriptreact = { "prettierd" },
-		typescriptreact = { "prettierd", "prettier", stop_after_first = true },
-		css = { "prettierd" },
-		html = { "prettierd" },
-		json = { "prettierd" },
-		yaml = { "prettierd" },
-		markdown = { "prettierd" },
+		javascript = { "prettier" },
+		typescript = { "prettier" },
+		javascriptreact = { "prettier" },
+		typescriptreact = { "prettier" },
+		css = { "prettier" },
+		html = { "prettier" },
+		json = { "prettier" },
+		yaml = { "prettier" },
+		markdown = { "prettier" },
+		toml = { "taplo" },
 	},
 })
 vim.keymap.set({ "n", "v" }, "<leader>f", function()

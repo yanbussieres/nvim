@@ -1,4 +1,4 @@
----@type vim.lsp.Config
+---@type table<string, any>
 return {
 	cmd = { "typescript-language-server", "--stdio" },
 	filetypes = {
