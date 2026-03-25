@@ -13,7 +13,7 @@ return {
 	},
 	settings = {
 		Lua = {
-			runtime = { version = "Lua 5.4" },
+			runtime = { version = "LuaJIT" },
 			workspace = {
 				library = { vim.env.VIMRUNTIME },
 				checkThirdParty = false,

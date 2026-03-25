@@ -1,13 +1,9 @@
 -- Neovim 0.12+ config — uses vim.pack instead of lazy.nvim
--- Mirrors nvimREAL plugin set and settings
 
 -- ─────────────────────────────── Leader ─────────────────────────────────
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.have_nerd_font = true
-
--- Fix GBrowse on macOS (netrw#BrowseX signature changed)
-vim.g.netrw_browsex_viewer = "open"
 
 -- Disable unused providers
 vim.g.loaded_ruby_provider = 0
@@ -48,7 +44,7 @@ vim.filetype.add({ extension = { mdc = "markdown" } })
 
 -- ─────────────────────────────── Keymaps ────────────────────────────────
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
-vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [L]ocation list" })
 vim.keymap.set("n", "<C-g>", function()
 	local path = vim.fn.expand("%:p")
 	vim.fn.setreg("+", path)
@@ -74,7 +70,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- Update: :lua vim.pack.update()   Remove: :lua vim.pack.del({'name'})
 vim.pack.add({
 	-- Colorscheme
-	-- { src = "https://github.com/scottmckendry/cyberdream.nvim" },
+	{ src = "https://github.com/scottmckendry/cyberdream.nvim" },
 
 	-- Core editing
 	{ src = "https://github.com/NMAC427/guess-indent.nvim" },
@@ -82,8 +78,7 @@ vim.pack.add({
 
 	-- Git
 	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
-	{ src = "https://github.com/tpope/vim-fugitive" },
-	{ src = "https://github.com/tpope/vim-rhubarb" },
+	{ src = "https://github.com/NeogitOrg/neogit" },
 
 	-- Keybinding hints
 	{ src = "https://github.com/folke/which-key.nvim" },
@@ -112,6 +107,7 @@ vim.pack.add({
 
 	-- Markdown rendering
 	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
+	{ src = "https://github.com/dhruvasagar/vim-table-mode" },
 
 	-- File tree
 	{ src = "https://github.com/MunifTanjim/nui.nvim" },
@@ -121,10 +117,14 @@ vim.pack.add({
 	{ src = "https://github.com/christoomey/vim-tmux-navigator" },
 }, { load = true })
 
+-- nvim-treesitter installs parsers + queries to stdpath("data")/site,
+-- which is not automatically in rtp in Neovim 0.12.
+vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")
+
 -- ─────────────────────────── Plugin Setup ───────────────────────────────
 
 -- Colorscheme
--- vim.cmd.colorscheme("cyberdream-light")
+vim.cmd.colorscheme("cyberdream-light")
 
 -- Guess indent
 require("guess-indent").setup({})
@@ -138,8 +138,7 @@ statusline.section_location = function()
 end
 ---@diagnostic disable-next-line: duplicate-set-field
 statusline.section_git = function()
-	local raw = vim.fn.FugitiveStatusline()
-	local branch = raw:match("%((.-)%)")
+	local branch = vim.b.gitsigns_head
 	if not branch or branch == "" then
 		return ""
 	end
@@ -199,14 +198,16 @@ require("gitsigns").setup({
 	end,
 })
 
--- Fugitive
-vim.keymap.set("n", "<leader>gG", "<cmd>Git<CR>", { desc = "[G]it fugitive status" })
-vim.keymap.set({ "n", "v" }, "<leader>go", "<cmd>GBrowse<CR>", { desc = "[G]it [O]pen on GitHub" })
+-- Neogit
+require("neogit").setup({})
+vim.keymap.set("n", "<leader>gg", function()
+	require("neogit").open()
+end, { desc = "[G]it [N]eogit status" })
 
 -- Which-key
 require("which-key").setup({
 	delay = 300,
-	icons = { mappings = vim.g.have_nerd_font, keys = vim.g.have_nerd_font and {} or {} },
+	icons = { mappings = vim.g.have_nerd_font, keys = vim.g.have_nerd_font and {} or nil },
 	preset = "modern",
 	spec = {
 		{ "<leader>s", group = "[S]earch" },
@@ -227,7 +228,6 @@ vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch curren
 vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
 vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
 vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
-vim.keymap.set("n", "<leader>gg", builtin.git_status, { desc = "[G]it [S]tatus" })
 vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = "[S]earch Recent Files" })
 vim.keymap.set("n", "<leader>/", function()
 	builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({ winblend = 10, previewer = false }))
@@ -252,6 +252,9 @@ vim.keymap.set("n", "<leader><leader>", function()
 		require("fff").find_files()
 	end
 end, { desc = "Find files (fff, git-root or cwd)" })
+vim.keymap.set("n", "<leader>k", function()
+	require("fff").live_grep()
+end, { desc = "LiFFFe grep" })
 
 -- Fidget
 require("fidget").setup({})
@@ -270,7 +273,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		local map = function(keys, func, desc, mode)
 			vim.keymap.set(mode or "n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
 		end
-		-- gr* keymaps are nvim 0.12 built-in defaults; extras below are not covered natively
+		-- gO/gW are not built-in; grt overrides the 0.12 built-in with Telescope
 		map("gO", require("telescope.builtin").lsp_document_symbols, "Document Symbols")
 		map("gW", require("telescope.builtin").lsp_dynamic_workspace_symbols, "Workspace Symbols")
 		map("grt", require("telescope.builtin").lsp_type_definitions, "[G]oto [T]ype Definition")
@@ -321,18 +324,6 @@ vim.diagnostic.config({
 	virtual_text = { source = "if_many", spacing = 2 },
 })
 
--- Global: merge blink capabilities into every server
-vim.lsp.config("*", {
-	capabilities = require("blink.cmp").get_lsp_capabilities(),
-})
-
--- LSP servers (all installed manually via brew/npm — no mason)
--- ts_ls: npm install -g typescript typescript-language-server
--- lua_ls: brew install lua-language-server
--- eslint_ls: npm install -g vscode-langservers-extracted
--- tailwindcss: npm install -g @tailwindcss/language-server
-vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo" })
-
 -- Conform (format on save)
 require("conform").setup({
 	notify_on_error = true,
@@ -357,10 +348,18 @@ require("conform").setup({
 		toml = { "taplo" },
 	},
 })
-vim.keymap.set({ "n", "v" }, "<leader>f", function()
+vim.keymap.set({ "n", "v" }, "<leader>ff", function()
 	require("conform").format({ async = true, lsp_format = "never" })
 end, { desc = "[F]ormat buffer" })
-vim.keymap.set("n", "<leader>fe", "<cmd>EslintFixAll<CR>", { desc = "[F]ix [E]SLint" })
+vim.keymap.set("n", "<leader>fe", function()
+	local bufnr = vim.api.nvim_get_current_buf()
+	for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr, name = "eslint_ls" })) do
+		client:exec_cmd(
+			{ command = "eslint.applyAllFixes", arguments = { { uri = vim.uri_from_bufnr(bufnr) } } },
+			{ bufnr = bufnr }
+		)
+	end
+end, { desc = "[F]ix [E]SLint" })
 
 -- LuaSnip
 require("luasnip").setup({
@@ -392,9 +391,22 @@ require("blink.cmp").setup({
 			copilot = { name = "copilot", module = "blink-cmp-copilot", score_offset = 25, async = true },
 		},
 	},
-	fuzzy = { implementation = "prefer_rust_with_warning" },
+	fuzzy = { implementation = "prefer_rust" },
 	signature = { enabled = true },
 })
+
+-- Global: merge blink capabilities into every server
+vim.lsp.config("*", {
+	capabilities = require("blink.cmp").get_lsp_capabilities(),
+})
+
+-- LSP servers (all installed manually via brew/npm — no mason)
+-- ts_ls:       npm install -g typescript typescript-language-server
+-- lua_ls:      brew install lua-language-server
+-- eslint_ls:   npm install -g vscode-langservers-extracted
+-- tailwindcss: npm install -g @tailwindcss/language-server
+-- taplo:       brew install taplo
+vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo" })
 
 -- Treesitter
 require("nvim-treesitter").install({
@@ -423,7 +435,7 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- Render-markdown
-require("render-markdown").setup({})
+require("render-markdown").setup({ latex = { enabled = false }, yaml = { enabled = false } })
 
 -- Neo-tree
 require("neo-tree").setup({
@@ -436,6 +448,6 @@ require("neo-tree").setup({
 		},
 	},
 })
-vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", { desc = "NeoTree reveal", silent = false })
+vim.keymap.set("n", "<leader>e", ":Neotree reveal<CR>", { desc = "NeoTree reveal", silent = true })
 
 -- vim: ts=2 sts=2 sw=2 et

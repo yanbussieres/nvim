@@ -1,4 +1,5 @@
----@type table<string, any>
+---@diagnostic disable: undefined-doc-name
+---@type vim.lsp.Config
 return {
 	cmd = { "typescript-language-server", "--stdio" },
 	filetypes = {
