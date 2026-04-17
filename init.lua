@@ -218,6 +218,20 @@ require("which-key").setup({
 	},
 })
 
+-- fff.nvim
+require("fff").setup({})
+vim.keymap.set("n", "<leader><leader>", function()
+	local git_root = vim.fs.root(0, ".git")
+	if git_root then
+		require("fff").find_files_in_dir(git_root)
+	else
+		require("fff").find_files()
+	end
+end, { desc = "Find files (fff, git-root or cwd)" })
+vim.keymap.set("n", "<leader>k", function()
+	require("fff").live_grep()
+end, { desc = "LiFFFe grep" })
+
 -- Telescope
 require("telescope").setup({})
 local builtin = require("telescope.builtin")
@@ -241,20 +255,6 @@ end, { desc = "[S]earch [N]eovim files" })
 vim.keymap.set("n", "<leader>sf", function()
 	builtin.find_files({ hidden = true, no_ignore = true, prompt_title = "Find Files" })
 end, { desc = "[S]earch [F]iles (hidden)" })
-
--- fff.nvim
-require("fff").setup({})
-vim.keymap.set("n", "<leader><leader>", function()
-	local git_root = vim.fs.root(0, ".git")
-	if git_root then
-		require("fff").find_files_in_dir(git_root)
-	else
-		require("fff").find_files()
-	end
-end, { desc = "Find files (fff, git-root or cwd)" })
-vim.keymap.set("n", "<leader>k", function()
-	require("fff").live_grep()
-end, { desc = "LiFFFe grep" })
 
 -- Fidget
 require("fidget").setup({})
