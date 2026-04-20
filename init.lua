@@ -131,12 +131,10 @@ require("guess-indent").setup({})
 
 -- Mini statusline
 local statusline = require("mini.statusline")
-statusline.setup({ use_icons = vim.g.have_nerd_font })
----@diagnostic disable-next-line: duplicate-set-field
+statusline.setup({})
 statusline.section_location = function()
 	return "%2l:%-2v"
 end
----@diagnostic disable-next-line: duplicate-set-field
 statusline.section_git = function()
 	local branch = vim.b.gitsigns_head
 	if not branch or branch == "" then
@@ -200,7 +198,7 @@ require("gitsigns").setup({
 
 -- Neogit
 require("neogit").setup({})
-vim.keymap.set("n", "<leader>gg", function()
+vim.keymap.set("n", "<leader>hn", function()
 	require("neogit").open()
 end, { desc = "[G]it [N]eogit status" })
 
@@ -221,26 +219,26 @@ require("which-key").setup({
 -- Telescope
 require("telescope").setup({})
 local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
-vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]earch [S]elect Telescope" })
-vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
-vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
-vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
-vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
-vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = "[S]earch Recent Files" })
+vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[H]elp" })
+vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[K]eymaps" })
+vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]elect Telescope" })
+vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[W]ord" })
+-- vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[G]rep" })
+vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[D]iagnostics" })
+vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[R]esume" })
+vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = "[.]recent Files" })
 vim.keymap.set("n", "<leader>/", function()
 	builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({ winblend = 10, previewer = false }))
 end, { desc = "[/] Fuzzily search in current buffer" })
 vim.keymap.set("n", "<leader>s/", function()
 	builtin.live_grep({ grep_open_files = true, prompt_title = "Live Grep in Open Files" })
-end, { desc = "[S]earch [/] in Open Files" })
+end, { desc = "[/]Open Files" })
 vim.keymap.set("n", "<leader>sn", function()
 	builtin.find_files({ cwd = vim.fn.stdpath("config") })
-end, { desc = "[S]earch [N]eovim files" })
+end, { desc = "[N]eovimConf" })
 vim.keymap.set("n", "<leader>sf", function()
 	builtin.find_files({ hidden = true, no_ignore = true, prompt_title = "Find Files" })
-end, { desc = "[S]earch [F]iles (hidden)" })
+end, { desc = "HIDDEN-[F]iles)" })
 
 -- fff.nvim
 require("fff").setup({})
@@ -252,7 +250,7 @@ vim.keymap.set("n", "<leader><leader>", function()
 		require("fff").find_files()
 	end
 end, { desc = "Find files (fff, git-root or cwd)" })
-vim.keymap.set("n", "<leader>k", function()
+vim.keymap.set("n", "<leader>g", function()
 	require("fff").live_grep()
 end, { desc = "LiFFFe grep" })
 
