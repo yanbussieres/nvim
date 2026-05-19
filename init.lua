@@ -51,10 +51,20 @@ vim.keymap.set("n", "<C-g>", function()
 	vim.notify("Copied: " .. path, vim.log.levels.INFO)
 end, { desc = "Copy file path to clipboard" })
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
-vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus left" })
-vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus right" })
-vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus down" })
-vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus up" })
+vim.keymap.set("n", "<leader>mp", function()
+	if vim.fn.executable("glow") == 0 then
+		vim.notify("glow not found — install with `brew install glow`", vim.log.levels.ERROR)
+		return
+	end
+	local file = vim.fn.expand("%:p")
+	if file == "" or vim.bo.buftype ~= "" then
+		vim.notify("No file for current buffer", vim.log.levels.WARN)
+		return
+	end
+	vim.cmd("botright 20split | terminal glow -p " .. vim.fn.shellescape(file))
+	vim.cmd("startinsert")
+end, { desc = "[M]arkdown [P]review (glow)" })
+-- <C-h/j/k/l> window/tmux navigation provided by vim-tmux-navigator
 
 -- ─────────────────────────────── Autocmds ───────────────────────────────
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -70,15 +80,13 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- Update: :lua vim.pack.update()   Remove: :lua vim.pack.del({'name'})
 vim.pack.add({
 	-- Colorscheme
-	{ src = "https://github.com/scottmckendry/cyberdream.nvim" },
-
+	{ src = "https://github.com/olimorris/onedarkpro.nvim" },
 	-- Core editing
 	{ src = "https://github.com/NMAC427/guess-indent.nvim" },
 	{ src = "https://github.com/echasnovski/mini.nvim" },
 
 	-- Git
 	{ src = "https://github.com/lewis6991/gitsigns.nvim" },
-	{ src = "https://github.com/NeogitOrg/neogit" },
 
 	-- Keybinding hints
 	{ src = "https://github.com/folke/which-key.nvim" },
@@ -91,6 +99,7 @@ vim.pack.add({
 
 	-- LSP
 	{ src = "https://github.com/j-hui/fidget.nvim" },
+	{ src = "https://github.com/b0o/SchemaStore.nvim" },
 
 	-- Completion
 	{ src = "https://github.com/saghen/blink.cmp", version = "v1.9.1" },
@@ -109,6 +118,9 @@ vim.pack.add({
 	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
 	{ src = "https://github.com/dhruvasagar/vim-table-mode" },
 
+	-- Typst preview
+	{ src = "https://github.com/chomosuke/typst-preview.nvim" },
+
 	-- File tree
 	{ src = "https://github.com/MunifTanjim/nui.nvim" },
 	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim" },
@@ -123,8 +135,9 @@ vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")
 
 -- ─────────────────────────── Plugin Setup ───────────────────────────────
 
--- Colorscheme
-vim.cmd.colorscheme("cyberdream-light")
+-- Colorscheme — onedarkpro
+-- Variants: "onedark", "onelight", "onedark_vivid", "onedark_dark"
+vim.cmd.colorscheme("onelight")
 
 -- Guess indent
 require("guess-indent").setup({})
@@ -196,12 +209,6 @@ require("gitsigns").setup({
 	end,
 })
 
--- Neogit
-require("neogit").setup({})
-vim.keymap.set("n", "<leader>hn", function()
-	require("neogit").open()
-end, { desc = "[G]it [N]eogit status" })
-
 -- Which-key
 require("which-key").setup({
 	delay = 300,
@@ -209,10 +216,11 @@ require("which-key").setup({
 	preset = "modern",
 	spec = {
 		{ "<leader>s", group = "[S]earch" },
-		{ "<leader>g", group = "[G]it" },
 		{ "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
 		{ "<leader>f", group = "[F]ile/Format/Fix" },
 		{ "<leader>u", group = "[U]I Toggle" },
+		{ "<leader>m", group = "[M]arkdown" },
+		{ "<leader>t", group = "[T]ypst" },
 	},
 })
 
@@ -223,7 +231,6 @@ vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[H]elp" })
 vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[K]eymaps" })
 vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]elect Telescope" })
 vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[W]ord" })
--- vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[G]rep" })
 vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[D]iagnostics" })
 vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[R]esume" })
 vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = "[.]recent Files" })
@@ -404,7 +411,10 @@ vim.lsp.config("*", {
 -- eslint_ls:   npm install -g vscode-langservers-extracted
 -- tailwindcss: npm install -g @tailwindcss/language-server
 -- taplo:       brew install taplo
-vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo" })
+-- marksman:    brew install marksman
+-- jsonls:      npm install -g vscode-langservers-extracted (already required by eslint_ls)
+-- tinymist:    brew install tinymist
+vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls", "tinymist" })
 
 -- Treesitter
 require("nvim-treesitter").install({
@@ -422,6 +432,7 @@ require("nvim-treesitter").install({
 	"markdown_inline",
 	"query",
 	"toml",
+	"typst",
 	"vim",
 	"vimdoc",
 })
@@ -434,6 +445,13 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- Render-markdown
 require("render-markdown").setup({ latex = { enabled = false }, yaml = { enabled = false } })
+
+-- Typst preview — reuses the brew-installed tinymist binary so the plugin
+-- doesn't download its own copy.
+require("typst-preview").setup({
+	dependencies_bin = { tinymist = "tinymist" },
+})
+vim.keymap.set("n", "<leader>tp", "<cmd>TypstPreviewToggle<CR>", { desc = "[T]ypst [P]review toggle" })
 
 -- Neo-tree
 require("neo-tree").setup({
