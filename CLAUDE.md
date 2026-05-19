@@ -51,15 +51,13 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 
 | Plugin               | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
-| onedarkpro.nvim      | Colorscheme (`onelight` variant active)                   |
+| onedarkpro.nvim      | Colorscheme (`onedark` — matches default Ghostty bg)      |
 | guess-indent.nvim    | Auto-detect indentation                                   |
 | mini.nvim            | Statusline (mini.statusline)                              |
 | gitsigns.nvim        | Git hunk signs + keymaps                                  |
 | which-key.nvim       | Keymap hints (delay 300ms, modern preset)                 |
-| plenary.nvim         | Telescope dependency                                      |
 | nvim-web-devicons    | Icons (requires nerd font)                                |
-| telescope.nvim       | Fuzzy finder                                              |
-| fff.nvim             | Fast file finder (git-root aware)                         |
+| fzf.vim              | Fuzzy finder (uses brew-installed `fzf` binary/runtime)   |
 | fidget.nvim          | LSP progress spinner                                      |
 | blink.cmp (v1.9.1)   | Completion engine (rust fuzzy impl)                       |
 | LuaSnip (v2.4.1)     | Snippet engine                                            |
@@ -83,9 +81,9 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 | `<leader>e`                   | Toggle Neo-tree (reveal current file)         |
 | `<leader>ff`                  | Format buffer (conform, async)                |
 | `<leader>fe`                  | Fix ESLint (apply all fixes via eslint_ls)    |
-| `<leader>g`                   | Live grep (fff)                               |
-| `<leader>s*`                  | Telescope searches                            |
-| `<leader><leader>`            | Find files (fff: git-root or cwd)             |
+| `<leader>g`                   | Live grep (`:Rg`)                             |
+| `<leader>s*`                  | fzf.vim searches (Helptags/Maps/Buffers/...)  |
+| `<leader><leader>`            | Find files (`:GFiles` in git, else `:Files`)  |
 | `<leader>h*`                  | Gitsigns hunk operations                      |
 | `<leader>mp`                  | Markdown preview via `glow` in split terminal |
 | `<leader>tp`                  | Toggle Typst live browser preview             |
@@ -94,7 +92,7 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 | `<leader>q`                   | Open diagnostic location list                 |
 | `<C-g>`                       | Copy current file path to clipboard           |
 | `grn/gra/grr/gri/grd/grD/grt` | LSP rename/action/refs/impl/def/decl/type     |
-| `gO / gW`                     | Document / workspace symbols (Telescope)      |
+| `gO / gW`                     | Document (built-in) / workspace symbols       |
 | `<leader>uh`                  | Toggle LSP inlay hints                        |
 
 ## Formatting (conform.nvim)

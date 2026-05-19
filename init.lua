@@ -92,10 +92,8 @@ vim.pack.add({
 	{ src = "https://github.com/folke/which-key.nvim" },
 
 	-- Fuzzy finder
-	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 	{ src = "https://github.com/nvim-tree/nvim-web-devicons" },
-	{ src = "https://github.com/nvim-telescope/telescope.nvim" },
-	{ src = "https://github.com/dmtrKovalenko/fff.nvim" },
+	{ src = "https://github.com/junegunn/fzf.vim" },
 
 	-- LSP
 	{ src = "https://github.com/j-hui/fidget.nvim" },
@@ -137,7 +135,7 @@ vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")
 
 -- Colorscheme — onedarkpro
 -- Variants: "onedark", "onelight", "onedark_vivid", "onedark_dark"
-vim.cmd.colorscheme("onelight")
+vim.cmd.colorscheme("onedark")
 
 -- Guess indent
 require("guess-indent").setup({})
@@ -224,42 +222,29 @@ require("which-key").setup({
 	},
 })
 
--- Telescope
-require("telescope").setup({})
-local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[H]elp" })
-vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[K]eymaps" })
-vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]elect Telescope" })
-vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[W]ord" })
-vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[D]iagnostics" })
-vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[R]esume" })
-vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = "[.]recent Files" })
-vim.keymap.set("n", "<leader>/", function()
-	builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({ winblend = 10, previewer = false }))
-end, { desc = "[/] Fuzzily search in current buffer" })
-vim.keymap.set("n", "<leader>s/", function()
-	builtin.live_grep({ grep_open_files = true, prompt_title = "Live Grep in Open Files" })
-end, { desc = "[/]Open Files" })
+-- fzf.vim — uses brew-installed fzf binary + runtime
+vim.opt.rtp:prepend("/opt/homebrew/opt/fzf")
+vim.g.fzf_layout = { down = "40%" }
+vim.keymap.set("n", "<leader><leader>", function()
+	if vim.fs.root(0, ".git") then
+		vim.cmd("GFiles")
+	else
+		vim.cmd("Files")
+	end
+end, { desc = "Find files (git-root or cwd)" })
+vim.keymap.set("n", "<leader>g", ":Rg<CR>", { desc = "Live grep (Rg)" })
+vim.keymap.set("n", "<leader>sh", ":Helptags<CR>", { desc = "[H]elp" })
+vim.keymap.set("n", "<leader>sk", ":Maps<CR>", { desc = "[K]eymaps" })
+vim.keymap.set("n", "<leader>sw", ':execute "Rg " . expand("<cword>")<CR>', { desc = "[W]ord" })
+vim.keymap.set("n", "<leader>s.", ":History<CR>", { desc = "[.]recent Files" })
+vim.keymap.set("n", "<leader>/", ":BLines<CR>", { desc = "[/] Fuzzily search in current buffer" })
+vim.keymap.set("n", "<leader>sb", ":Buffers<CR>", { desc = "[B]uffers" })
 vim.keymap.set("n", "<leader>sn", function()
-	builtin.find_files({ cwd = vim.fn.stdpath("config") })
+	vim.cmd("Files " .. vim.fn.stdpath("config"))
 end, { desc = "[N]eovimConf" })
 vim.keymap.set("n", "<leader>sf", function()
-	builtin.find_files({ hidden = true, no_ignore = true, prompt_title = "Find Files" })
-end, { desc = "HIDDEN-[F]iles)" })
-
--- fff.nvim
-require("fff").setup({})
-vim.keymap.set("n", "<leader><leader>", function()
-	local git_root = vim.fs.root(0, ".git")
-	if git_root then
-		require("fff").find_files_in_dir(git_root)
-	else
-		require("fff").find_files()
-	end
-end, { desc = "Find files (fff, git-root or cwd)" })
-vim.keymap.set("n", "<leader>g", function()
-	require("fff").live_grep()
-end, { desc = "LiFFFe grep" })
+	vim.cmd("call fzf#vim#files('', {'source': 'rg --files --hidden --no-ignore --glob=!.git'})")
+end, { desc = "HIDDEN-[F]iles" })
 
 -- Fidget
 require("fidget").setup({})
@@ -278,10 +263,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		local map = function(keys, func, desc, mode)
 			vim.keymap.set(mode or "n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
 		end
-		-- gO/gW are not built-in; grt overrides the 0.12 built-in with Telescope
-		map("gO", require("telescope.builtin").lsp_document_symbols, "Document Symbols")
-		map("gW", require("telescope.builtin").lsp_dynamic_workspace_symbols, "Workspace Symbols")
-		map("grt", require("telescope.builtin").lsp_type_definitions, "[G]oto [T]ype Definition")
+		-- gW = workspace symbols; gO (document symbols) is built-in in 0.12
+		map("gW", function()
+			vim.lsp.buf.workspace_symbol("")
+		end, "Workspace Symbols")
+		map("grt", vim.lsp.buf.type_definition, "[G]oto [T]ype Definition")
 
 		local client = vim.lsp.get_client_by_id(event.data.client_id)
 		if client then
