@@ -14,11 +14,10 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 │   ├── eslint_ls.lua     # vscode-eslint-language-server config
 │   ├── tailwindcss.lua   # tailwindcss-language-server config
 │   ├── taplo.lua         # taplo (TOML) LSP config
-│   ├── marksman.lua      # marksman (markdown) LSP config
-│   └── tinymist.lua      # tinymist (typst) LSP config
+│   ├── jsonls.lua        # vscode-json-language-server config (uses SchemaStore)
+│   └── marksman.lua      # marksman (markdown) LSP config
 ├── ftplugin/
-│   ├── markdown.lua      # <CR> follows markdown links; <leader>x toggles checkbox
-│   └── typst.lua         # wrap, spell, conceallevel for prose editing
+│   └── markdown.lua      # <CR> follows markdown links; <leader>x toggles checkbox
 └── nvim-pack-lock.json   # Lockfile — managed by vim.pack automatically
 ```
 
@@ -31,13 +30,13 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 - Lockfile: `nvim-pack-lock.json` — committed to git
 - Update all: `:lua vim.pack.update()`
 - Remove plugin: `:lua vim.pack.del({'plugin-name'})`
-- Pinned versions use `version = "vX.Y.Z"` (blink.cmp v1.9.1, LuaSnip v2.4.1)
+- Pinned versions use `version = "vX.Y.Z"` (blink.cmp v1.9.1)
 
 ## LSP Setup (0.12 native style)
 
 - Server configs live in `lsp/<server_name>.lua` — canonical location, auto-loaded by Neovim 0.12
 - Global capabilities set via `vim.lsp.config("*", {...})` in `init.lua` (blink.cmp caps)
-- Servers enabled via `vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls", "tinymist" })`
+- Servers enabled via `vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls" })`
 - **No Mason** — install servers manually:
   - `ts_ls`: `npm install -g typescript typescript-language-server`
   - `lua_ls`: `brew install lua-language-server`
@@ -45,30 +44,22 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
   - `tailwindcss`: `npm install -g @tailwindcss/language-server`
   - `taplo`: `brew install taplo`
   - `marksman`: `brew install marksman`
-  - `tinymist`: `brew install tinymist` (also powers typst-preview.nvim)
 
 ## Plugin Inventory
 
 | Plugin               | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
-| onedarkpro.nvim      | Colorscheme (`onedark` — matches default Ghostty bg)      |
-| guess-indent.nvim    | Auto-detect indentation                                   |
+| github-nvim-theme    | Colorscheme (`github_light_default` — matches Ghostty)    |
 | mini.nvim            | Statusline (mini.statusline)                              |
 | gitsigns.nvim        | Git hunk signs + keymaps                                  |
-| which-key.nvim       | Keymap hints (delay 300ms, modern preset)                 |
 | nvim-web-devicons    | Icons (requires nerd font)                                |
 | fzf.vim              | Fuzzy finder (uses brew-installed `fzf` binary/runtime)   |
-| fidget.nvim          | LSP progress spinner                                      |
+| SchemaStore.nvim     | JSON schemas for jsonls                                   |
 | blink.cmp (v1.9.1)   | Completion engine (rust fuzzy impl)                       |
-| LuaSnip (v2.4.1)     | Snippet engine                                            |
-| friendly-snippets    | Community snippet collection (VSCode format)              |
-| copilot.lua          | Copilot backend (suggestions/panel disabled)              |
-| blink-cmp-copilot    | Copilot source for blink.cmp                              |
 | conform.nvim         | Format on save                                            |
 | nvim-treesitter      | Syntax/highlighting (FileType autocmd enables per-buffer) |
 | render-markdown.nvim | Markdown rendering in buffer (latex/yaml disabled)        |
-| vim-table-mode       | Markdown table editing                                    |
-| typst-preview.nvim   | Live browser preview for `.typ` files (uses tinymist)     |
+| plenary.nvim         | Neo-tree dependency (async/job utilities)                 |
 | nui.nvim             | Neo-tree dependency                                       |
 | neo-tree.nvim        | File explorer                                             |
 | vim-tmux-navigator   | C-h/j/k/l tmux pane navigation                            |
@@ -85,13 +76,11 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 | `<leader>s*`                  | fzf.vim searches (Helptags/Maps/Buffers/...)  |
 | `<leader><leader>`            | Find files (`:GFiles` in git, else `:Files`)  |
 | `<leader>h*`                  | Gitsigns hunk operations                      |
-| `<leader>mp`                  | Markdown preview via `glow` in split terminal |
-| `<leader>tp`                  | Toggle Typst live browser preview             |
 | `<leader>x` (md buf)          | Toggle markdown checkbox `[ ]` ↔ `[x]`        |
 | `<leader>u*`                  | UI toggles (blame, inlay hints, deleted)      |
 | `<leader>q`                   | Open diagnostic location list                 |
 | `<C-g>`                       | Copy current file path to clipboard           |
-| `grn/gra/grr/gri/grd/grD/grt` | LSP rename/action/refs/impl/def/decl/type     |
+| `grn/gra/grr/gri/grd/grD/grt` | LSP rename/action/refs/impl/def/decl/type (built-in 0.12) |
 | `gO / gW`                     | Document (built-in) / workspace symbols       |
 | `<leader>uh`                  | Toggle LSP inlay hints                        |
 
@@ -102,15 +91,12 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 - Manual format: `<leader>ff`
 - ESLint fix (all rules): `<leader>fe`
 
-## Completion (blink.cmp + LuaSnip)
+## Completion (blink.cmp)
 
-- Snippet engine: LuaSnip (`snippets = { preset = "luasnip" }`)
-- Sources: lsp, path, snippets, copilot
-- Copilot score_offset = 25 (boosted)
+- Sources: lsp, path
 - Signature help enabled
 - Documentation auto_show = false
-- LuaSnip jump keymaps: `<C-l>` forward, `<C-h>` backward (insert/select mode)
-  (`<Tab>`/`<S-Tab>` belong to blink.cmp for completion selection)
+- `<Tab>`/`<S-Tab>` belong to blink.cmp for completion selection
 
 ## Filetype Notes
 
@@ -120,15 +106,6 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
     before opening quickfix); falls back to a literal `<CR>` when no LSP client
     on the buffer supports `textDocument/definition` (uses `expr = true`)
   - `<leader>x` toggles the checkbox on the current list line (`[ ]` ↔ `[x]`)
-- Markdown preview: `<leader>mp` opens `glow -p` in a 20-line bottom split terminal
-  (requires `brew install glow`)
-- Typst (`.typ`):
-  - Filetype is built-in (no `vim.filetype.add` needed)
-  - LSP via `tinymist` (`brew install tinymist`); also formats on save (typstyle)
-    and exports PDF on save (`exportPdf = "onSave"` in `lsp/tinymist.lua`)
-  - `<leader>tp` toggles a live browser preview via `typst-preview.nvim`
-    — the plugin reuses the system `tinymist` binary (no separate download)
-  - `ftplugin/typst.lua`: `wrap`, `linebreak`, `spell`, `conceallevel=2` for prose editing
 
 ## Editing This Config
 
