@@ -1,7 +1,7 @@
 # Neovim Config — CLAUDE.md
 
 Neovim 0.12+ configuration using the built-in `vim.pack` plugin manager.
-No lazy.nvim or other external plugin manager. No Mason — LSP servers installed manually.
+N3. hheovim 1.12+ configuratio using the built-in `vim.pack` plugin manager.o lazy.nvim or other external plugin manager. No Mason — LSP servers installed manually.
 
 ## Structure
 
@@ -10,7 +10,7 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 ├── init.lua              # Single-file config (all plugins, options, keymaps)
 ├── lsp/
 │   ├── lua_ls.lua        # lua-language-server config
-│   ├── ts_ls.lua         # typescript-language-server config
+│   ├── tsgo.lua          # tsgo (native TS preview, @typescript/native-preview)
 │   ├── eslint_ls.lua     # vscode-eslint-language-server config
 │   ├── tailwindcss.lua   # tailwindcss-language-server config
 │   ├── taplo.lua         # taplo (TOML) LSP config
@@ -36,9 +36,9 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 
 - Server configs live in `lsp/<server_name>.lua` — canonical location, auto-loaded by Neovim 0.12
 - Global capabilities set via `vim.lsp.config("*", {...})` in `init.lua` (blink.cmp caps)
-- Servers enabled via `vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls" })`
+- Servers enabled via `vim.lsp.enable({ "tsgo", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls" })`
 - **No Mason** — install servers manually:
-  - `ts_ls`: `npm install -g typescript typescript-language-server`
+  - `tsgo`: `npm install -g @typescript/native-preview` (provides the `tsgo` binary)
   - `lua_ls`: `brew install lua-language-server`
   - `eslint_ls`: `npm install -g vscode-langservers-extracted`
   - `tailwindcss`: `npm install -g @tailwindcss/language-server`
@@ -53,7 +53,8 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 | mini.nvim            | Statusline (mini.statusline)                              |
 | gitsigns.nvim        | Git hunk signs + keymaps                                  |
 | nvim-web-devicons    | Icons (requires nerd font)                                |
-| fzf.vim              | Fuzzy finder (uses brew-installed `fzf` binary/runtime)   |
+| fzf.vim              | Helptags/Maps/Buffers/BLines/History pickers (brew `fzf`) |
+| fff.nvim             | File picker + live grep (Rust binary, built on install)   |
 | SchemaStore.nvim     | JSON schemas for jsonls                                   |
 | blink.cmp (v1.9.1)   | Completion engine (rust fuzzy impl)                       |
 | conform.nvim         | Format on save                                            |
@@ -66,23 +67,26 @@ No lazy.nvim or other external plugin manager. No Mason — LSP servers installe
 
 ## Key Keymaps
 
-| Key                           | Action                                        |
-| ----------------------------- | --------------------------------------------- |
-| `<leader>`                    | Space                                         |
-| `<leader>e`                   | Toggle Neo-tree (reveal current file)         |
-| `<leader>ff`                  | Format buffer (conform, async)                |
-| `<leader>fe`                  | Fix ESLint (apply all fixes via eslint_ls)    |
-| `<leader>g`                   | Live grep (`:Rg`)                             |
-| `<leader>s*`                  | fzf.vim searches (Helptags/Maps/Buffers/...)  |
-| `<leader><leader>`            | Find files (`:GFiles` in git, else `:Files`)  |
-| `<leader>h*`                  | Gitsigns hunk operations                      |
-| `<leader>x` (md buf)          | Toggle markdown checkbox `[ ]` ↔ `[x]`        |
-| `<leader>u*`                  | UI toggles (blame, inlay hints, deleted)      |
-| `<leader>q`                   | Open diagnostic location list                 |
-| `<C-g>`                       | Copy current file path to clipboard           |
+| Key                           | Action                                                    |
+| ----------------------------- | --------------------------------------------------------- |
+| `<leader>`                    | Space                                                     |
+| `<leader>e`                   | Toggle Neo-tree (reveal current file)                     |
+| `<leader>ff`                  | Format buffer (conform, async)                            |
+| `<leader>fe`                  | Fix ESLint (apply all fixes via eslint_ls)                |
+| `<leader>g`                   | Live grep (fff.nvim)                                      |
+| `<leader>sw`                  | Live grep current word (fff.nvim)                         |
+| `<leader>sn`                  | Find files in nvim config dir (fff.nvim)                  |
+| `<leader>sh/sk/s./sb/sf`      | fzf.vim Helptags/Maps/History/Buffers/Hidden              |
+| `<leader>/`                   | Buffer lines (fzf.vim `:BLines`)                          |
+| `<leader><leader>`            | Find files (fff.nvim)                                     |
+| `<leader>h*`                  | Gitsigns hunk operations                                  |
+| `<leader>x` (md buf)          | Toggle markdown checkbox `[ ]` ↔ `[x]`                    |
+| `<leader>u*`                  | UI toggles (blame, inlay hints, deleted)                  |
+| `<leader>q`                   | Open diagnostic location list                             |
+| `<C-g>`                       | Copy current file path to clipboard                       |
 | `grn/gra/grr/gri/grd/grD/grt` | LSP rename/action/refs/impl/def/decl/type (built-in 0.12) |
-| `gO / gW`                     | Document (built-in) / workspace symbols       |
-| `<leader>uh`                  | Toggle LSP inlay hints                        |
+| `gO / gW`                     | Document (built-in) / workspace symbols                   |
+| `<leader>uh`                  | Toggle LSP inlay hints                                    |
 
 ## Formatting (conform.nvim)
 

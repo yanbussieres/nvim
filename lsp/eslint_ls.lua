@@ -8,7 +8,16 @@ return {
 		"typescript",
 		"typescriptreact",
 	},
-	root_markers = { ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", "eslint.config.js", "eslint.config.mjs", "eslint.config.ts", "package.json" },
+	-- Priority groups (nvim 0.12): an eslint config wins over package.json so the
+	-- server always roots at a dir that actually has a flat/legacy config. In a
+	-- monorepo, files under a config-less package.json (repo root, packages/tsconfig)
+	-- would otherwise root config-less and throw "path undefined".
+	root_markers = {
+		{ "eslint.config.js", "eslint.config.mjs", "eslint.config.cjs", "eslint.config.ts" },
+		{ ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json" },
+		"package.json",
+		".git",
+	},
 	before_init = function(params, config)
 		local folder = params.workspaceFolders and params.workspaceFolders[1]
 		if folder then
@@ -22,10 +31,7 @@ return {
 	settings = {
 		eslint = {
 			validate = "on",
-			packageManager = nil,
 			useESLintClass = false,
-			useFlatConfig = nil,
-			experimentalUseFlatConfig = false,
 			codeAction = {
 				disableRuleComment = { enable = true, location = "separateLine" },
 				showDocumentation = { enable = true },

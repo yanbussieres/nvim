@@ -4,6 +4,7 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.have_nerd_font = true
+vim.keymap.set({ "n", "x" }, "<Space>", "<Nop>", { silent = true })
 
 -- Disable unused providers
 vim.g.loaded_ruby_provider = 0
@@ -77,6 +78,7 @@ vim.pack.add({
   -- Fuzzy finder
   { src = "https://github.com/nvim-tree/nvim-web-devicons" },
   { src = "https://github.com/junegunn/fzf.vim" },
+  { src = "https://github.com/dmtrKovalenko/fff" },
 
   -- LSP
   { src = "https://github.com/b0o/SchemaStore.nvim" },
@@ -108,12 +110,28 @@ vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")
 
 -- ─────────────────────────── Plugin Setup ───────────────────────────────
 
--- Colorscheme — github-nvim-theme (matches Ghostty "GitHub Light Default")
+-- Colorscheme — github-nvim-theme, follows macOS light/dark appearance.
 -- Variants: github_light, github_light_default, github_light_high_contrast,
 --           github_light_colorblind, github_light_tritanopia (+ dark equivalents)
-vim.o.background = "light"
 require("github-theme").setup({})
-vim.cmd.colorscheme("github_light_default")
+
+local function macos_is_dark()
+  -- `defaults read -g AppleInterfaceStyle` prints "Dark" in dark mode and
+  -- exits non-zero (no value) in light mode.
+  return vim.trim(vim.fn.system("defaults read -g AppleInterfaceStyle 2>/dev/null")) == "Dark"
+end
+
+local function sync_theme()
+  local want = macos_is_dark() and "github_dark" or "github_light_default"
+  if vim.g.colors_name ~= want then
+    vim.cmd.colorscheme(want)
+  end
+end
+
+sync_theme()
+
+-- Re-check when nvim regains focus so it follows live macOS theme toggles.
+vim.api.nvim_create_autocmd("FocusGained", { callback = sync_theme })
 
 -- Mini statusline
 local statusline = require("mini.statusline")
@@ -183,28 +201,44 @@ require("gitsigns").setup({
 })
 
 -- fzf.vim — uses brew-installed fzf binary + runtime
+-- Used for ancillary pickers (Helptags/Maps/Buffers/BLines/History/hidden files).
+-- File find and live grep are handled by fff.nvim below.
 vim.opt.rtp:prepend("/opt/homebrew/opt/fzf")
 vim.g.fzf_layout = { down = "40%" }
-vim.keymap.set("n", "<leader><leader>", function()
-  if vim.fs.root(0, ".git") then
-    vim.cmd("GFiles")
-  else
-    vim.cmd("Files")
-  end
-end, { desc = "Find files (git-root or cwd)" })
-vim.keymap.set("n", "<leader>g", ":Rg<CR>", { desc = "Live grep (Rg)" })
 vim.keymap.set("n", "<leader>sh", ":Helptags<CR>", { desc = "[H]elp" })
 vim.keymap.set("n", "<leader>sk", ":Maps<CR>", { desc = "[K]eymaps" })
-vim.keymap.set("n", "<leader>sw", ':execute "Rg " . expand("<cword>")<CR>', { desc = "[W]ord" })
 vim.keymap.set("n", "<leader>s.", ":History<CR>", { desc = "[.]recent Files" })
 vim.keymap.set("n", "<leader>/", ":BLines<CR>", { desc = "[/] Fuzzily search in current buffer" })
 vim.keymap.set("n", "<leader>sb", ":Buffers<CR>", { desc = "[B]uffers" })
-vim.keymap.set("n", "<leader>sn", function()
-  vim.cmd("Files " .. vim.fn.stdpath("config"))
-end, { desc = "[N]eovimConf" })
 vim.keymap.set("n", "<leader>sf", function()
   vim.cmd("call fzf#vim#files('', {'source': 'rg --files --hidden --no-ignore --glob=!.git'})")
 end, { desc = "HIDDEN-[F]iles" })
+
+-- fff.nvim — file picker + live grep (Rust-backed, built on install/update)
+vim.api.nvim_create_autocmd("PackChanged", {
+  callback = function(ev)
+    local name, kind = ev.data.spec.name, ev.data.kind
+    if name == "fff" and (kind == "install" or kind == "update") then
+      if not ev.data.active then
+        vim.cmd.packadd("fff")
+      end
+      require("fff.download").download_or_build_binary()
+    end
+  end,
+})
+vim.g.fff = { lazy_sync = true }
+vim.keymap.set("n", "<leader><leader>", function()
+  require("fff").find_files()
+end, { desc = "Find files (fff)" })
+vim.keymap.set("n", "<leader>g", function()
+  require("fff").live_grep()
+end, { desc = "Live grep (fff)" })
+vim.keymap.set("n", "<leader>sw", function()
+  require("fff").live_grep({ query = vim.fn.expand("<cword>") })
+end, { desc = "[W]ord (fff grep)" })
+vim.keymap.set("n", "<leader>sn", function()
+  require("fff").find_files_in_dir(vim.fn.stdpath("config"))
+end, { desc = "[N]eovimConf" })
 
 -- LSP attach keymaps & highlights
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -307,7 +341,9 @@ require("blink.cmp").setup({
 
 -- Global: merge blink capabilities into every server
 vim.lsp.config("*", {
-  capabilities = require("blink.cmp").get_lsp_capabilities(),
+  capabilities = vim.tbl_deep_extend("force", require("blink.cmp").get_lsp_capabilities(), {
+    general = { positionEncodings = { "utf-16" } },
+  }),
 })
 
 -- LSP servers (all installed manually via brew/npm — no mason)
@@ -318,7 +354,7 @@ vim.lsp.config("*", {
 -- taplo:       brew install taplo
 -- marksman:    brew install marksman
 -- jsonls:      npm install -g vscode-langservers-extracted (already required by eslint_ls)
-vim.lsp.enable({ "ts_ls", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls" })
+vim.lsp.enable({ "tsgo", "lua_ls", "eslint_ls", "tailwindcss", "taplo", "marksman", "jsonls" })
 
 -- Treesitter — only call install() when a parser is actually missing.
 -- install() unconditionally reloads the parsers module on every call.

@@ -13,6 +13,10 @@
       "rev": "18aeab3d63d350dcf44d64c462cc489a3412af40",
       "src": "https://github.com/stevearc/conform.nvim"
     },
+    "fff": {
+      "rev": "cf3dcf6d0b47c299614ba54f341ce7b5284e73ff",
+      "src": "https://github.com/dmtrKovalenko/fff"
+    },
     "fzf.vim": {
       "rev": "b9624aa012ddcbae9e79964bfd30cc1fbe3cf263",
       "src": "https://github.com/junegunn/fzf.vim"

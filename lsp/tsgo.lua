@@ -1,7 +1,7 @@
 ---@diagnostic disable: undefined-doc-name
 ---@type vim.lsp.Config
 return {
-	cmd = { "typescript-language-server", "--stdio" },
+	cmd = { "tsgo", "--lsp", "--stdio" },
 	filetypes = {
 		"javascript",
 		"javascriptreact",
