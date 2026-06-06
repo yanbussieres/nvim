@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Une invitation au cinéma — Marie-Jade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d0b14;
+  --paper:#f4ede0;
+  --crimson:#c8102e;
+  --gold:#e6b84f;
+  --teal:#1b6e6a;
+  --dim:#8a8276;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'Fraunces',serif;
+  overflow-x:hidden;
+}
+.grain::before{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+  opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- HERO / TICKET ---- */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:6vh 5vw;position:relative;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(200,16,46,.25), transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(27,110,106,.3), transparent 50%),
+    var(--ink);
+}
+.marquee-lights{
+  position:absolute;top:0;left:0;width:100%;height:6px;
+  background:repeating-linear-gradient(90deg,var(--gold) 0 10px,transparent 10px 26px);
+  animation:slide 1.2s linear infinite;
+}
+@keyframes slide{to{background-position:36px 0;}}
+
+.ticket{
+  position:relative;z-index:2;width:min(640px,100%);
+  background:var(--paper);color:var(--ink);
+  border-radius:8px;
+  box-shadow:0 40px 80px rgba(0,0,0,.6);
+  overflow:hidden;
+  animation:rise 1s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(40px) rotate(-1deg);}to{opacity:1;transform:none;}}
+.ticket-top{
+  background:var(--crimson);color:var(--paper);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;
+  font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+}
+.ticket-body{padding:46px 38px 30px;}
+.kicker{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);}
+.ticket-body h1{
+  font-family:'Bebas Neue',sans-serif;font-weight:400;
+  font-size:clamp(3rem,11vw,5.6rem);line-height:.9;letter-spacing:.01em;margin:.2em 0 .15em;
+}
+.ticket-body h1 em{font-family:'Fraunces',serif;font-style:italic;font-weight:300;color:var(--crimson);display:block;font-size:.42em;letter-spacing:.02em;margin-top:.15em;}
+.invite-text{font-size:1.12rem;line-height:1.55;max-width:46ch;color:#2a2620;margin-top:1.2em;}
+.invite-text .name{color:var(--crimson);font-style:italic;font-weight:500;}
+.perf{display:flex;flex-wrap:wrap;gap:24px;margin-top:1.6em;}
+.perf div{font-family:'Space Mono',monospace;}
+.perf span{display:block;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:3px;}
+.perf strong{font-size:1rem;color:var(--ink);}
+.stub{
+  border-top:2px dashed rgba(13,11,20,.3);margin-top:30px;padding:20px 38px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);
+}
+.perforation{position:relative;}
+.perforation::before,.perforation::after{
+  content:"";position:absolute;top:-12px;width:24px;height:24px;border-radius:50%;background:var(--ink);
+}
+.perforation::before{left:-12px;}.perforation::after{right:-12px;}
+.scroll-cue{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);z-index:2;font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);animation:bob 2s ease-in-out infinite;}
+@keyframes bob{50%{transform:translate(-50%,8px);}}
+
+/* ---- PROGRAMME ---- */
+.programme{padding:8vh 5vw 12vh;position:relative;z-index:2;}
+.prog-head{text-align:center;margin-bottom:5vh;}
+.prog-head .kicker{color:var(--gold);}
+.prog-head h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,8vw,5rem);letter-spacing:.02em;line-height:1;margin-top:.15em;}
+.venue{font-family:'Space Mono',monospace;font-size:.8rem;letter-spacing:.1em;color:var(--dim);margin-top:.8em;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:26px;max-width:1180px;margin:0 auto;}
+.card{
+  background:linear-gradient(160deg,#181522,#0f0d17);
+  border:1px solid rgba(230,184,79,.16);
+  border-radius:14px;padding:22px;
+  display:flex;flex-direction:column;gap:14px;
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),border-color .35s,box-shadow .35s;
+}
+.card:hover{transform:translateY(-6px);border-color:var(--gold);box-shadow:0 24px 50px rgba(0,0,0,.5);}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.card h3{font-family:'Fraunces',serif;font-size:1.32rem;font-weight:500;line-height:1.15;}
+.rating{flex-shrink:0;font-family:'Space Mono',monospace;font-size:.6rem;border:1px solid var(--dim);color:var(--dim);padding:3px 7px;border-radius:5px;letter-spacing:.05em;}
+.meta{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.06em;color:var(--teal);text-transform:uppercase;}
+.fmt{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-top:4px;}
+.times{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px;}
+.time{
+  font-family:'Space Mono',monospace;font-size:.78rem;
+  background:rgba(200,16,46,.14);color:var(--paper);
+  border:1px solid rgba(200,16,46,.4);
+  padding:6px 11px;border-radius:20px;
+  cursor:pointer;transition:background .2s,transform .2s;
+}
+.time:hover{background:var(--crimson);transform:scale(1.06);}
+.time.sel{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:700;}
+
+/* ---- FOOTER ---- */
+.footer{text-align:center;padding:8vh 5vw 10vh;position:relative;z-index:2;border-top:1px solid rgba(230,184,79,.15);}
+.footer .pick{font-family:'Space Mono',monospace;font-size:.78rem;letter-spacing:.1em;color:var(--gold);min-height:1.4em;margin-bottom:1.6em;}
+.footer p{font-family:'Fraunces',serif;font-style:italic;font-size:1.4rem;color:var(--paper);max-width:32ch;margin:0 auto .4em;}
+.footer .sign{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.06em;color:var(--crimson);margin-top:.6em;}
+@media(max-width:560px){.ticket-body{padding:34px 24px 24px;}.stub{padding:18px 24px;}}
+</style>
+</head>
+<body class="grain">
+
+<section class="hero">
+  <div class="marquee-lights"></div>
+  <div class="ticket">
+    <div class="ticket-top">
+      <span>Admit One</span>
+      <span>★ Soirée Cinéma ★</span>
+      <span>Rangée J · Siège 13</span>
+    </div>
+    <div class="ticket-body">
+      <p class="kicker">Une invitation</p>
+      <h1>Marie-Jade<em>on va au cinéma ?</em></h1>
+      <p class="invite-text">Chère <span class="name">Marie-Jade Camping</span>, j'aimerais beaucoup t'emmener voir un film. Voici la programmation du jour — choisis celui qui te tente, et je m'occupe du popcorn. 🍿</p>
+      <div class="perf">
+        <div><span>Date</span><strong>Aujourd'hui · 6 juin</strong></div>
+        <div><span>Lieu</span><strong>Cineplex Odeon</strong></div>
+        <div><span>Ville</span><strong>Québec, QC</strong></div>
+      </div>
+    </div>
+    <div class="stub perforation">
+      <span>No. 060625-MJ</span>
+      <span>Sainte-Foy · Beauport</span>
+    </div>
+  </div>
+  <a href="#prog" class="scroll-cue">↓ La programmation ↓</a>
+</section>
+
+<section class="programme" id="prog">
+  <div class="prog-head">
+    <p class="kicker">À l'affiche</p>
+    <h2>La Programmation</h2>
+    <p class="venue">Cinéma Cineplex Odeon — Sainte-Foy & Beauport · Québec, QC</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="footer">
+  <p class="pick" id="pick">— clique sur une heure pour faire ton choix —</p>
+  <p>Peu importe le film, le meilleur moment, c'est avec toi.</p>
+  <p class="sign">À très bientôt ❤</p>
+</section>
+
+<script>
+const films=[
+ {t:"Le diable s'habille en prada 2",r:"G",l:"Français · 1h59",f:"Sous-titres · Audiodescription",times:["3:50","6:50","9:40"]},
+ {t:"Les Moutons Détectives",r:"G",l:"Français · 1h49 · Famille",f:"Regular",times:["3:35","7:05","9:35"]},
+ {t:"Power Ballad",r:"G",l:"English · 1h38",f:"Regular",times:["1:55","4:20","7:25","9:50"]},
+ {t:"Obsession (v.f.)",r:"16+",l:"Français · 1h48",f:"Regular",times:["2:40","5:15","7:50","10:30"]},
+ {t:"Obsession",r:"16+",l:"English · 1h48 · Beauport",f:"Regular",times:["4:05","7:00","9:30"]},
+ {t:"Masters of the Universe",r:"G",l:"English · 2h21",f:"ScreenX · No passes",times:["3:35","6:45","9:45"]},
+ {t:"Les maîtres de l'Univers",r:"G",l:"Français · 2h21",f:"Regular · No passes",times:["4:10","7:15","10:15"]},
+ {t:"Backrooms : Les arrière-salles",r:"13+",l:"Français · 1h51",f:"UltraAVX · D-BOX · Regular",times:["2:10","3:45","4:45","7:20","9:10","10:00"]},
+ {t:"Backrooms",r:"13+",l:"English · 1h51 · Beauport",f:"Regular",times:["3:20","6:30","9:00"]},
+ {t:"Michael (v.f.)",r:"G",l:"Français · 2h07",f:"Regular",times:["3:20","6:45","9:35"]},
+ {t:"Le soutien de famille",r:"G",l:"Français · 1h35",f:"Regular · No passes",times:["2:00","4:30","6:55","9:30"]}
+];
+const grid=document.getElementById('grid');
+const pick=document.getElementById('pick');
+films.forEach((m,i)=>{
+  const c=document.createElement('div');c.className='card';c.style.animationDelay=(i*40)+'ms';
+  c.innerHTML=`<div class="card-head"><h3>${m.t}</h3><span class="rating">${m.r}</span></div>
+  <p class="meta">${m.l}</p><p class="fmt">${m.f}</p>
+  <div class="times">${m.times.map(t=>`<span class="time">${t}${t!=='—'?' PM':''}</span>`).join('')}</div>`;
+  grid.appendChild(c);
+});
+document.querySelectorAll('.time').forEach(b=>{
+  if(b.textContent.includes('—'))return;
+  b.onclick=()=>{
+    document.querySelectorAll('.time.sel').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    const film=b.closest('.card').querySelector('h3').textContent;
+    pick.textContent=`✓ Marie-Jade a choisi : ${film} à ${b.textContent}`;
+    pick.style.color='var(--gold)';
+  };
+});
+</script>
+</body>
+</html>
