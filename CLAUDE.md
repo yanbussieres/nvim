@@ -1,7 +1,7 @@
 # Neovim Config — CLAUDE.md
 
-Neovim 0.12+ configuration using the built-in `vim.pack` plugin manager.
-N3. hheovim 1.12+ configuratio using the built-in `vim.pack` plugin manager.o lazy.nvim or other external plugin manager. No Mason — LSP servers installed manually.
+Neovim 0.12+ configuration using the built-in `vim.pack` plugin manager. No
+lazy.nvim or other external plugin manager. No Mason — LSP servers installed manually.
 
 ## Structure
 
@@ -42,13 +42,16 @@ N3. hheovim 1.12+ configuratio using the built-in `vim.pack` plugin manager.o la
   - `tailwindcss`: `npm install -g @tailwindcss/language-server`
   - `taplo`: `brew install taplo`
   - `marksman`: `brew install marksman`
+  - `jsonls`: `npm install -g vscode-langservers-extracted`
 
 ## Plugin Inventory
 
 | Plugin               | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
-| github-nvim-theme    | Colorscheme (`github_light_default` — matches Ghostty)    |
-| mini.nvim            | Statusline (mini.statusline) + file explorer (mini.files) |
+| cyberdream.nvim      | Colorscheme (cyberdream light variant, true-color theme)  |
+| mini.nvim            | Statusline (mini.statusline)                              |
+| neo-tree.nvim        | Sidebar file explorer (tree view)                         |
+| nui.nvim             | UI component library (neo-tree dependency)                |
 | gitsigns.nvim        | Git hunk signs + keymaps                                  |
 | nvim-web-devicons    | Icons (requires nerd font)                                |
 | plenary.nvim         | Telescope dependency (async/utils)                        |
@@ -56,23 +59,25 @@ N3. hheovim 1.12+ configuratio using the built-in `vim.pack` plugin manager.o la
 | telescope-fzf-native | Compiled fzf sorter (built via `make` on install/update)  |
 | fff.nvim             | File picker + live grep (Rust binary, built on install)   |
 | SchemaStore.nvim     | JSON schemas for jsonls                                   |
-| blink.cmp (v1.9.1)   | Completion engine (rust fuzzy impl)                       |
+| blink.cmp (v1.10.2)  | Completion engine (rust fuzzy impl)                       |
 | conform.nvim         | Format on save                                            |
 | nvim-treesitter      | Syntax/highlighting (FileType autocmd enables per-buffer) |
 | render-markdown.nvim | Markdown rendering in buffer (latex/yaml disabled)        |
-| vim-tmux-navigator   | C-h/j/k/l tmux pane navigation                            |
+| nvim-tmux-navigation | C-h/j/k/l nav across nvim splits + tmux panes             |
+| which-key.nvim       | Keymap hint popup (helix preset) for leader groups        |
 
 ## Key Keymaps
 
 | Key                           | Action                                                    |
 | ----------------------------- | --------------------------------------------------------- |
 | `<leader>`                    | Space                                                     |
-| `<leader>e`                   | Toggle mini.files (reveals current file)                  |
+| `<leader>e`                   | Toggle Neo-tree sidebar (reveals current file)            |
 | `<leader>ff`                  | Format buffer (conform, async)                            |
 | `<leader>sg`                  | Live grep (fff.nvim)                                      |
 | `<leader>sw`                  | Live grep current word (fff.nvim)                         |
 | `<leader>sn`                  | Find files in nvim config dir (fff.nvim)                  |
 | `<leader>sh/sk/s./sb/sf`      | Telescope help/keymaps/oldfiles/buffers/hidden            |
+| `<leader>s$`                  | Telescope find `.env*` files                              |
 | `<leader>gg/gl/gp`            | Lazygit / `gh pr list` / `gh pr view --web`               |
 | `<leader>sr/sd`               | Telescope resume / diagnostics                            |
 | `<leader>/`                   | Telescope `current_buffer_fuzzy_find`                     |
@@ -118,3 +123,5 @@ N3. hheovim 1.12+ configuratio using the built-in `vim.pack` plugin manager.o la
 - `nvim-pack-lock.json` is auto-updated on install/update — commit it
 - Treesitter parsers installed via `require("nvim-treesitter").install({...})`
 - Treesitter stdpath prepend needed: `vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")`
+- `<C-h/j/k/l>` nav (nvim-tmux-navigation) requires matching `is_vim`
+  keybindings in `~/.config/tmux/tmux.conf` to cross into tmux panes
