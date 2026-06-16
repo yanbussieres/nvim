@@ -1,11 +1,8 @@
 ---@diagnostic disable: undefined-doc-name
----@type vim.lsp.Config
-local schemas, validate = {}, true
 local ok, schemastore = pcall(require, "schemastore")
-if ok then
-	schemas = schemastore.json.schemas()
-end
+local schemas = ok and schemastore.json.schemas() or {}
 
+---@type vim.lsp.Config
 return {
 	cmd = { "vscode-json-language-server", "--stdio" },
 	filetypes = { "json", "jsonc" },
@@ -14,7 +11,7 @@ return {
 	settings = {
 		json = {
 			schemas = schemas,
-			validate = { enable = validate },
+			validate = { enable = true },
 		},
 	},
 }

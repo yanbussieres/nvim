@@ -223,21 +223,31 @@ vim.keymap.set("n", "<leader>gl", function()
 	open_in_term("gh pr list")
 end, { desc = "GitHub: list PRs" })
 
--- Telescope — ancillary pickers (helptags/keymaps/buffers/blines/oldfiles/hidden files).
--- File find + live grep stay on fff.nvim below (faster Rust-backed indexer).
--- telescope-fzf-native is a compiled sorter; built on install/update via PackChanged.
+-- Build native binaries for plugins that ship source (run on install/update).
+-- telescope-fzf-native: compiled fzf sorter. fff: Rust file-picker binary.
 vim.api.nvim_create_autocmd("PackChanged", {
+	group = vim.api.nvim_create_augroup("pack-build", { clear = true }),
 	callback = function(ev)
 		local name, kind = ev.data.spec.name, ev.data.kind
-		if name == "telescope-fzf-native.nvim" and (kind == "install" or kind == "update") then
+		if kind ~= "install" and kind ~= "update" then
+			return
+		end
+		if name == "telescope-fzf-native.nvim" then
 			local result = vim.system({ "make" }, { cwd = ev.data.path }):wait()
 			if result.code ~= 0 then
 				vim.notify("telescope-fzf-native build failed:\n" .. (result.stderr or ""), vim.log.levels.ERROR)
 			end
+		elseif name == "fff" then
+			if not ev.data.active then
+				vim.cmd.packadd("fff")
+			end
+			require("fff.download").download_or_build_binary()
 		end
 	end,
 })
 
+-- Telescope — ancillary pickers (helptags/keymaps/buffers/blines/oldfiles/hidden files).
+-- File find + live grep stay on fff.nvim below (faster Rust-backed indexer).
 require("telescope").setup({
 	defaults = {
 		path_display = { "truncate" },
@@ -283,18 +293,7 @@ end, { desc = ".env* files" })
 vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[R]esume picker" })
 vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[D]iagnostics" })
 
--- fff.nvim — file picker + live grep (Rust-backed, built on install/update)
-vim.api.nvim_create_autocmd("PackChanged", {
-	callback = function(ev)
-		local name, kind = ev.data.spec.name, ev.data.kind
-		if name == "fff" and (kind == "install" or kind == "update") then
-			if not ev.data.active then
-				vim.cmd.packadd("fff")
-			end
-			require("fff.download").download_or_build_binary()
-		end
-	end,
-})
+-- fff.nvim — file picker + live grep (Rust-backed; binary built via PackChanged above)
 vim.g.fff = { lazy_sync = true }
 vim.keymap.set("n", "<leader><leader>", function()
 	require("fff").find_files()
@@ -310,6 +309,10 @@ vim.keymap.set("n", "<leader>sn", function()
 end, { desc = "[N]eovimConf" })
 
 -- LSP attach keymaps & highlights
+-- Document-highlight augroup is created once here so LspDetach (also registered
+-- once below) can always clear it, even if no highlight-capable client attached.
+local lsp_highlight = vim.api.nvim_create_augroup("lsp-highlight", { clear = true })
+
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = vim.api.nvim_create_augroup("lsp-attach", { clear = true }),
 	callback = function(event)
@@ -325,33 +328,34 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("grD", vim.lsp.buf.declaration, "Goto Declaration")
 
 		local client = vim.lsp.get_client_by_id(event.data.client_id)
-		if client then
-			if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
-				local hl = vim.api.nvim_create_augroup("lsp-highlight", { clear = false })
-				vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-					buffer = event.buf,
-					group = hl,
-					callback = vim.lsp.buf.document_highlight,
-				})
-				vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-					buffer = event.buf,
-					group = hl,
-					callback = vim.lsp.buf.clear_references,
-				})
-				vim.api.nvim_create_autocmd("LspDetach", {
-					group = vim.api.nvim_create_augroup("lsp-detach", { clear = true }),
-					callback = function(ev)
-						vim.lsp.buf.clear_references()
-						vim.api.nvim_clear_autocmds({ group = "lsp-highlight", buffer = ev.buf })
-					end,
-				})
-			end
-			if client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
-				map("<leader>uh", function()
-					vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }))
-				end, "[U]I Toggle Inlay [H]ints")
-			end
+		if not client then
+			return
 		end
+		if client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
+			vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+				buffer = event.buf,
+				group = lsp_highlight,
+				callback = vim.lsp.buf.document_highlight,
+			})
+			vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+				buffer = event.buf,
+				group = lsp_highlight,
+				callback = vim.lsp.buf.clear_references,
+			})
+		end
+		if client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+			map("<leader>uh", function()
+				vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf }))
+			end, "[U]I Toggle Inlay [H]ints")
+		end
+	end,
+})
+
+vim.api.nvim_create_autocmd("LspDetach", {
+	group = vim.api.nvim_create_augroup("lsp-detach", { clear = true }),
+	callback = function(event)
+		vim.lsp.buf.clear_references()
+		vim.api.nvim_clear_autocmds({ group = lsp_highlight, buffer = event.buf })
 	end,
 })
 
@@ -463,6 +467,7 @@ do
 	end
 end
 vim.api.nvim_create_autocmd("FileType", {
+	group = vim.api.nvim_create_augroup("treesitter-start", { clear = true }),
 	pattern = "*",
 	callback = function()
 		pcall(vim.treesitter.start)
