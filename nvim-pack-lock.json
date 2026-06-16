@@ -13,17 +13,13 @@
       "rev": "619363c30309d29ffa631e67c8183f2a72caa373",
       "src": "https://github.com/stevearc/conform.nvim"
     },
+    "cyberdream": {
+      "rev": "4fbdeb7376faed87ead7c7c805c02092ca7bac01",
+      "src": "https://github.com/scottmckendry/cyberdream.nvim"
+    },
     "fff": {
       "rev": "030a583b37802416ce9108295b209d2e6b9d0079",
       "src": "https://github.com/dmtrKovalenko/fff"
-    },
-    "fzf.vim": {
-      "rev": "e5b53de3d3b402d2ef9f74da91c2bb808d0afb34",
-      "src": "https://github.com/junegunn/fzf.vim"
-    },
-    "github-nvim-theme": {
-      "rev": "c106c9472154d6b2c74b74565616b877ae8ed31d",
-      "src": "https://github.com/projekt0n/github-nvim-theme"
     },
     "gitsigns.nvim": {
       "rev": "dd3f588bacbeb041be6facf1742e42097f62165d",
@@ -32,6 +28,18 @@
     "mini.nvim": {
       "rev": "15abccbe23525ee0502d2efe620c77db00bfb93c",
       "src": "https://github.com/echasnovski/mini.nvim"
+    },
+    "neo-tree.nvim": {
+      "rev": "b83de592f2a8bdd749a00668a8253878cd801f15",
+      "src": "https://github.com/nvim-neo-tree/neo-tree.nvim"
+    },
+    "nui.nvim": {
+      "rev": "de740991c12411b663994b2860f1a4fd0937c130",
+      "src": "https://github.com/MunifTanjim/nui.nvim"
+    },
+    "nvim-tmux-navigation": {
+      "rev": "4898c98702954439233fdaf764c39636681e2861",
+      "src": "https://github.com/alexghergh/nvim-tmux-navigation"
     },
     "nvim-treesitter": {
       "rev": "4916d6592ede8c07973490d9322f187e07dfefac",
@@ -57,9 +65,13 @@
       "rev": "7d324792b7943e4aa16ad007212e6acc6f9fe335",
       "src": "https://github.com/nvim-telescope/telescope.nvim"
     },
-    "vim-tmux-navigator": {
-      "rev": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432",
-      "src": "https://github.com/christoomey/vim-tmux-navigator"
+    "tokyonight": {
+      "rev": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6",
+      "src": "https://github.com/folke/tokyonight.nvim"
+    },
+    "which-key.nvim": {
+      "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",
+      "src": "https://github.com/folke/which-key.nvim"
     }
   }
 }

@@ -48,7 +48,7 @@ lazy.nvim or other external plugin manager. No Mason — LSP servers installed m
 
 | Plugin               | Purpose                                                   |
 | -------------------- | --------------------------------------------------------- |
-| cyberdream.nvim      | Colorscheme (cyberdream light variant, true-color theme)  |
+| tokyonight.nvim      | Colorscheme (style="storm"/light_style="day", tracks &background light/dark) |
 | mini.nvim            | Statusline (mini.statusline)                              |
 | neo-tree.nvim        | Sidebar file explorer (tree view)                         |
 | nui.nvim             | UI component library (neo-tree dependency)                |

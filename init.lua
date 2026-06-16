@@ -3,8 +3,11 @@
 -- ─────────────────────────────── Leader ─────────────────────────────────
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-vim.g.have_nerd_font = true
 vim.keymap.set({ "n", "x" }, "<Space>", "<Nop>", { silent = true })
+
+-- Disable netrw (neo-tree handles directory/file browsing)
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 
 -- Disable unused providers
 vim.g.loaded_ruby_provider = 0
@@ -52,7 +55,7 @@ vim.keymap.set("n", "<C-g>", function()
 	vim.notify("Copied: " .. path, vim.log.levels.INFO)
 end, { desc = "Copy file path to clipboard" })
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
--- <C-h/j/k/l> window/tmux navigation provided by vim-tmux-navigator
+-- <C-h/j/k/l> window/tmux navigation provided by nvim-tmux-navigation (setup below)
 
 -- ─────────────────────────────── Autocmds ───────────────────────────────
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -68,7 +71,8 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- Update: :lua vim.pack.update()   Remove: :lua vim.pack.del({'name'})
 vim.pack.add({
 	-- Colorscheme
-	{ src = "https://github.com/projekt0n/github-nvim-theme" },
+	{ src = "https://github.com/folke/tokyonight.nvim", name = "tokyonight" },
+
 	-- Core editing
 	{ src = "https://github.com/echasnovski/mini.nvim" },
 
@@ -97,8 +101,12 @@ vim.pack.add({
 	-- Markdown rendering
 	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
 
+	-- File explorer
+	{ src = "https://github.com/MunifTanjim/nui.nvim" },
+	{ src = "https://github.com/nvim-neo-tree/neo-tree.nvim" },
+
 	-- Tmux navigation
-	{ src = "https://github.com/christoomey/vim-tmux-navigator" },
+	{ src = "https://github.com/alexghergh/nvim-tmux-navigation" },
 
 	-- Keymap hints (helix-style popup)
 	{ src = "https://github.com/folke/which-key.nvim" },
@@ -110,28 +118,19 @@ vim.opt.rtp:prepend(vim.fn.stdpath("data") .. "/site")
 
 -- ─────────────────────────── Plugin Setup ───────────────────────────────
 
--- Colorscheme — github-nvim-theme, follows macOS light/dark appearance.
--- Variants: github_light, github_light_default, github_light_high_contrast,
---           github_light_colorblind, github_light_tritanopia (+ dark equivalents)
-require("github-theme").setup({})
-
-local function macos_is_dark()
-	-- `defaults read -g AppleInterfaceStyle` prints "Dark" in dark mode and
-	-- exits non-zero (no value) in light mode.
-	return vim.trim(vim.fn.system("defaults read -g AppleInterfaceStyle 2>/dev/null")) == "Dark"
-end
-
-local function sync_theme()
-	local want = macos_is_dark() and "github_dark_high_contrast" or "github_light_high_contrast"
-	if vim.g.colors_name ~= want then
-		vim.cmd.colorscheme(want)
-	end
-end
-
-sync_theme()
-
--- Re-check when nvim regains focus so it follows live macOS theme toggles.
-vim.api.nvim_create_autocmd("FocusGained", { callback = sync_theme })
+-- Colorscheme — tokyonight (true-color palette). Requires termguicolors so
+-- highlights resolve to 24-bit RGB rather than the terminal's 16 ANSI colors.
+-- tokyonight styles supported plugins automatically via its integrations.
+vim.opt.termguicolors = true
+require("tokyonight").setup({
+	-- tokyonight reads &background on load: a "light" background swaps to
+	-- `light_style`, otherwise it uses `style`. Neovim sets &background from
+	-- the terminal's background (OSC 11), so nvim tracks the macOS light/dark
+	-- switch through ghostty, like bat/delta/etc. do.
+	style = "storm", -- dark variant: storm | night | moon
+	light_style = "day",
+})
+vim.cmd.colorscheme("tokyonight")
 
 -- Mini statusline
 local statusline = require("mini.statusline")
@@ -150,7 +149,8 @@ statusline.section_git = function()
 end
 
 -- Gitsigns
-require("gitsigns").setup({
+local gs = require("gitsigns")
+gs.setup({
 	signs = {
 		add = { text = "+" },
 		change = { text = "~" },
@@ -158,47 +158,46 @@ require("gitsigns").setup({
 		topdelete = { text = "‾" },
 		changedelete = { text = "~" },
 	},
-	on_attach = function(bufnr)
-		local gs = require("gitsigns")
-		local function map(mode, l, r, opts)
-			opts = opts or {}
-			opts.buffer = bufnr
-			vim.keymap.set(mode, l, r, opts)
-		end
-		map("n", "]c", function()
-			if vim.wo.diff then
-				vim.cmd.normal({ "]c", bang = true })
-			else
-				gs.nav_hunk("next")
-			end
-		end, { desc = "Jump to next git [c]hange" })
-		map("n", "[c", function()
-			if vim.wo.diff then
-				vim.cmd.normal({ "[c", bang = true })
-			else
-				gs.nav_hunk("prev")
-			end
-		end, { desc = "Jump to previous git [c]hange" })
-		map("v", "<leader>hs", function()
-			gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
-		end, { desc = "git [s]tage hunk" })
-		map("v", "<leader>hr", function()
-			gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
-		end, { desc = "git [r]eset hunk" })
-		map("n", "<leader>hs", gs.stage_hunk, { desc = "git [s]tage hunk" })
-		map("n", "<leader>hr", gs.reset_hunk, { desc = "git [r]eset hunk" })
-		map("n", "<leader>hS", gs.stage_buffer, { desc = "git [S]tage buffer" })
-		map("n", "<leader>hR", gs.reset_buffer, { desc = "git [R]eset buffer" })
-		map("n", "<leader>hp", gs.preview_hunk, { desc = "git [p]review hunk" })
-		map("n", "<leader>hb", gs.blame_line, { desc = "git [b]lame line" })
-		map("n", "<leader>hd", gs.diffthis, { desc = "git [d]iff against index" })
-		map("n", "<leader>hD", function()
-			gs.diffthis("@")
-		end, { desc = "git [D]iff against last commit" })
-		map("n", "<leader>ub", gs.toggle_current_line_blame, { desc = "[U]I Toggle git [b]lame" })
-		map("n", "<leader>uD", gs.preview_hunk_inline, { desc = "[U]I Toggle git show [D]eleted" })
-	end,
 })
+
+-- Keymaps are global (not in on_attach) so which-key always lists them under
+-- <leader>h / <leader>u and they work in every buffer. gitsigns no-ops safely
+-- when the current buffer isn't attached.
+local function gsmap(mode, l, r, desc)
+	vim.keymap.set(mode, l, r, { desc = desc })
+end
+gsmap("n", "]c", function()
+	if vim.wo.diff then
+		vim.cmd.normal({ "]c", bang = true })
+	else
+		gs.nav_hunk("next")
+	end
+end, "Jump to next git [c]hange")
+gsmap("n", "[c", function()
+	if vim.wo.diff then
+		vim.cmd.normal({ "[c", bang = true })
+	else
+		gs.nav_hunk("prev")
+	end
+end, "Jump to previous git [c]hange")
+gsmap("v", "<leader>hs", function()
+	gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+end, "git [s]tage hunk")
+gsmap("v", "<leader>hr", function()
+	gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+end, "git [r]eset hunk")
+gsmap("n", "<leader>hs", gs.stage_hunk, "git [s]tage hunk")
+gsmap("n", "<leader>hr", gs.reset_hunk, "git [r]eset hunk")
+gsmap("n", "<leader>hS", gs.stage_buffer, "git [S]tage buffer")
+gsmap("n", "<leader>hR", gs.reset_buffer, "git [R]eset buffer")
+gsmap("n", "<leader>hp", gs.preview_hunk, "git [p]review hunk")
+gsmap("n", "<leader>hb", gs.blame_line, "git [b]lame line")
+gsmap("n", "<leader>hd", gs.diffthis, "git [d]iff against index")
+gsmap("n", "<leader>hD", function()
+	gs.diffthis("@")
+end, "git [D]iff against last commit")
+gsmap("n", "<leader>ub", gs.toggle_current_line_blame, "[U]I Toggle git [b]lame")
+gsmap("n", "<leader>uD", gs.toggle_deleted, "[U]I Toggle git show [D]eleted")
 
 -- Lazygit + gh CLI (no plugin — runs in a new tab terminal)
 local function open_in_term(cmd)
@@ -496,14 +495,38 @@ require("render-markdown").setup({
 	},
 })
 
--- mini.files — file explorer (column-based, edit FS as a buffer)
-require("mini.files").setup({})
-vim.keymap.set("n", "<leader>e", function()
-	local mf = require("mini.files")
-	if not mf.close() then
-		mf.open(vim.api.nvim_buf_get_name(0), true)
-	end
-end, { desc = "Toggle mini.files (reveal current file)" })
+-- neo-tree — sidebar file explorer (tree view)
+require("neo-tree").setup({
+	close_if_last_window = true,
+	filesystem = {
+		follow_current_file = { enabled = true },
+		use_libuv_file_watcher = true,
+		filtered_items = {
+			visible = true,
+			hide_dotfiles = false,
+			hide_gitignored = false,
+		},
+	},
+	window = {
+		position = "left",
+		width = 32,
+	},
+})
+vim.keymap.set("n", "<leader>e", "<cmd>Neotree toggle reveal<cr>", { desc = "Toggle Neo-tree (reveal current file)" })
+
+-- nvim-tmux-navigation — seamless <C-h/j/k/l> nav across nvim splits & tmux panes.
+-- Pair with the matching is_vim keybindings in ~/.config/tmux/tmux.conf.
+require("nvim-tmux-navigation").setup({
+	disable_when_zoomed = true,
+	keybindings = {
+		left = "<C-h>",
+		down = "<C-j>",
+		up = "<C-k>",
+		right = "<C-l>",
+		last_active = "<C-\\>",
+		next = "<C-Space>",
+	},
+})
 
 -- which-key (helix-style popup)
 require("which-key").setup({
@@ -511,8 +534,18 @@ require("which-key").setup({
 	spec = {
 		{ "<leader>g", group = "git / github" },
 		{ "<leader>h", group = "git hunks" },
+		{ "<leader>hs", desc = "stage hunk", mode = { "n", "v" } },
+		{ "<leader>hr", desc = "reset hunk", mode = { "n", "v" } },
+		{ "<leader>hS", desc = "stage buffer" },
+		{ "<leader>hR", desc = "reset buffer" },
+		{ "<leader>hp", desc = "preview hunk" },
+		{ "<leader>hb", desc = "blame line" },
+		{ "<leader>hd", desc = "diff against index" },
+		{ "<leader>hD", desc = "diff against last commit" },
 		{ "<leader>s", group = "search" },
 		{ "<leader>u", group = "UI toggles" },
+		{ "<leader>ub", desc = "toggle line blame" },
+		{ "<leader>uD", desc = "toggle show deleted" },
 		{ "<leader>f", group = "format" },
 	},
 })
